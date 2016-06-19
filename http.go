@@ -12,6 +12,7 @@ import (
 //	"io"
 //	"bytes"
 	"io/ioutil"
+	"os"
 )
 
 var cmdHttp = &cli.Command{
@@ -28,8 +29,7 @@ var cmdHttp = &cli.Command{
 		&cli.StringFlag{
 			Name:"dir",
 			Aliases:[]string{"d"},
-			Value:"resource",
-			Usage:"set dir,-d dist/",
+			Usage:"set dir,-d resourse",
 		},
 	},
 
@@ -37,7 +37,7 @@ var cmdHttp = &cli.Command{
 
 const fileNamePathKey = "file_name"
 
-var dir = "./resource"
+var dir = ""
 
 func runHttp(c *cli.Context) error {
 
@@ -46,12 +46,13 @@ func runHttp(c *cli.Context) error {
 	r.HandleFunc("/", homeHandler);
 	r.HandleFunc(fmt.Sprintf("/{%s}", fileNamePathKey), avatarHandler);
 	println("app start ", addr)
-	d, err := filepath.Abs(c.String("d"))
-	if err != nil {
-		return err
+	if c.IsSet("dir") {
+		dir = c.String("dir");
 	}
-	dir = d
-	initialser.AppendFontPath(filepath.Join(dir, "*"))
+	if dir == "" {
+		dir = os.Getenv("dir")
+	}
+	initialser.AppendFontPath(filepath.Join(dir, "/*"))
 	return http.ListenAndServe(addr, r)
 
 }
