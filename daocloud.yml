@@ -1,0 +1,12 @@
+image: daocloud/ci-golang:1.5
+install:
+  - sudo apt-get update
+
+before_script:
+  - mkdir -p /gopath/src/initialser-http
+  - mv ./* /gopath/src/initialser-http
+
+script:
+  - export GOPATH=/gopath
+  - go get -t initialser-http
+  - go test initialser-http
