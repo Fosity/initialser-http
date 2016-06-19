@@ -29,6 +29,7 @@ var cmdHttp = &cli.Command{
 		&cli.StringFlag{
 			Name:"dir",
 			Aliases:[]string{"d"},
+			EnvVars:[]string{"DIR"},
 			Usage:"set dir,-d resourse",
 		},
 	},
@@ -50,7 +51,7 @@ func runHttp(c *cli.Context) error {
 		dir = c.String("dir");
 	}
 	if dir == "" {
-		dir = os.Getenv("dir")
+		dir = "./resource";
 	}
 	initialser.AppendFontPath(filepath.Join(dir, "/*"))
 	return http.ListenAndServe(addr, r)
