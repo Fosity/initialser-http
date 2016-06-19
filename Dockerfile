@@ -2,9 +2,9 @@ FROM golang:1.5.1
 
 MAINTAINER Leonlau "Leonlau@aliyun.com"
 
-ADD . $GOPATH/src/app
-RUN go get app
-RUN CGO_ENABLED=0 go install -a app
+ADD . $GOPATH/src/initialser-http
+RUN go get github.com/leonlau/initialser-http
+RUN go install -a initialser-http
 
 EXPOSE 80
-CMD app
+CMD ["initialser-http"]
