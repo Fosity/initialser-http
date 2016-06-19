@@ -95,12 +95,23 @@ dir:%s
 
 func runHttp(c *cli.Context) error {
 	switch  {
-	case c.IsSet("port"):conf.port = c.Int("port")
-	case c.IsSet("dir"):conf.dir = c.String("dir")
-	case c.IsSet("max-bg-size"):conf.maxBgSize = c.Int("max-bg-size")
-	case c.IsSet("max-f-size"):conf.maxFontSize = c.Int("max-f-size")
-	case c.IsSet("max-cache-items"):conf.maxItems = c.Int("max-cache-items")
-	case c.IsSet("max-cache-bytes"):conf.maxBytes = int64(c.Int("max-cache-items"))
+	case c.IsSet("port"):
+		conf.port = c.Int("port")
+		fallthrough
+	case c.IsSet("dir"):
+		conf.dir = c.String("dir")
+		fallthrough
+	case c.IsSet("max-bg-size"):
+		conf.maxBgSize = c.Int("max-bg-size")
+		fallthrough
+	case c.IsSet("max-f-size"):
+		conf.maxFontSize = c.Int("max-f-size")
+		fallthrough
+	case c.IsSet("max-cache-items"):
+		conf.maxItems = c.Int("max-cache-items")
+		fallthrough
+	case c.IsSet("max-cache-bytes"):
+		conf.maxBytes = int64(c.Int("max-cache-items"))
 	}
 	addr := fmt.Sprintf(":%d", conf.port);
 	r := mux.NewRouter()
