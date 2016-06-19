@@ -46,7 +46,11 @@ func runHttp(c *cli.Context) error {
 	r.HandleFunc("/", homeHandler);
 	r.HandleFunc(fmt.Sprintf("/{%s}", fileNamePathKey), avatarHandler);
 	println("app start ", addr)
-	dir = c.String("dir")
+	d, err := filepath.Abs(c.String("d"))
+	if err != nil {
+		return err
+	}
+	dir = d
 	initialser.AppendFontPath(filepath.Join(dir, "*"))
 	return http.ListenAndServe(addr, r)
 
