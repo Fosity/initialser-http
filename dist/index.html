@@ -180,8 +180,8 @@
             <span>张三</span>
         </li>
         <li v-bind:class="{active:index==2}">
-            <img src="/王.png?s=38&fs=25&bg=E08F70" class="circle "/>
-            <span>王老师</span>
+            <img src="/刘.png?s=38&fs=25&bg=E08F70" class="circle "/>
+            <span>刘老师</span>
         </li>
         <li v-bind:class="{active:index==3}">
             <img src="/L.png?s=38&fs=25&bg=4DB6AC" class="circle "/>
@@ -226,6 +226,16 @@
         </li>
 
     </ul>
+    <h3>svg</h3>
+
+    <div class="img-wrapper">
+        <ul>
+            <li class="" v-for="i in 10">
+                <img :src="svg" class="circle img-{{i}}" v-show="show" alt=""/>
+            </li>
+        </ul>
+    </div>
+
     <h3>png</h3>
 
     <div class="img-wrapper">
@@ -313,11 +323,23 @@
             blur: function () {
                 console.log("--blur-");
                 this.startLoop();
+            },
+            url: function (ext) {
+                return "/" + this.text + ext + "?bg=" + randomBg();
             }
         },
         computed: {
             show: function () {
                 return this.text != ""
+            },
+            svg: {
+                cache: false,
+                get: function () {
+                    if (!this.text) {
+                        return
+                    }
+                    return "/" + this.text + ".svg?bg=" + randomBg();
+                }
             },
             jpg: {
                 cache: false,
