@@ -12,7 +12,6 @@ import (
 //	"io"
 //	"bytes"
 	"io/ioutil"
-	"os"
 )
 
 var cmdHttp = &cli.Command{
