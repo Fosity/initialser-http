@@ -313,15 +313,10 @@
                 this.loop !== null && clearInterval(this.loop);
                 this.loop = null;
             },
-            change: function () {
-                console.log(this.text);
-            },
             focus: function () {
-                console.log("--focus-");
                 this.stopLoop();
             },
             blur: function () {
-                console.log("--blur-");
                 this.startLoop();
             },
             url: function (ext) {

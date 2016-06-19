@@ -18,24 +18,36 @@ var cmdHttp = &cli.Command{
 	Name:"http",
 	Usage:"start a http server",
 	Action:runHttp,
+	Flags:[]cli.Flag{
+		&cli.IntFlag{
+			Name:"port",
+			Aliases:[]string{"p"},
+			Value:80,
+			Usage:"set port,-p 8080",
+		},
+		&cli.StringFlag{
+			Name:"dir",
+			Aliases:[]string{"d"},
+			Value:"resource",
+			Usage:"set dir,-d dist/",
+		},
+	},
+
 }
 
 const fileNamePathKey = "file_name"
 
+var dir = "./resource"
 
 func runHttp(c *cli.Context) error {
 
-	//addr := fmt.Sprintf(":%d", c.Int("port"));
-	addr := fmt.Sprintf(":%d", 9527);
+	addr := fmt.Sprintf(":%d", c.Int("port"));
 	r := mux.NewRouter()
 	r.HandleFunc("/", homeHandler);
 	r.HandleFunc(fmt.Sprintf("/{%s}", fileNamePathKey), avatarHandler);
 	println("app start ", addr)
-
-	//append font path
-	p, _ := filepath.Abs(".")
-	initialser.AppendFontPath(p)
-
+	dir = c.String("dir")
+	initialser.AppendFontPath(filepath.Join(dir, "*"))
 	return http.ListenAndServe(addr, r)
 
 }
@@ -44,7 +56,11 @@ func runHttp(c *cli.Context) error {
 
 
 func homeHandler(w http.ResponseWriter, req *http.Request) {
-	data, _ := ioutil.ReadFile("index.html")
+	data, err := ioutil.ReadFile(filepath.Join(dir, "index.html"))
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
 	w.Write(data)
 }
 //avatarHandler server avatar
@@ -73,7 +89,6 @@ func avatarHandler(w http.ResponseWriter, req *http.Request) {
 	avatar := initialser.NewAvatar(text)
 	// parse query param to avatar
 	err := parseParamTo(avatar, req);
-	println(avatar.Key())
 	if badReq(w, err) {
 		return;
 	}
