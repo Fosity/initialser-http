@@ -9,9 +9,8 @@ import (
 	"github.com/leonlau/initialser"
 	"strconv"
 	"errors"
-//	"io"
-//	"bytes"
 	"io/ioutil"
+	"os"
 )
 
 var cmdHttp = &cli.Command{
@@ -46,12 +45,11 @@ func runHttp(c *cli.Context) error {
 	r.HandleFunc("/", homeHandler);
 	r.HandleFunc(fmt.Sprintf("/{%s}", fileNamePathKey), avatarHandler);
 	println("app start ", addr)
-	if c.IsSet("dir") {
-		dir = c.String("dir");
-	}
+	dir = os.ExpandEnv(c.String("dir"));
 	if dir == "" {
 		dir = "./resource";
 	}
+	println("dir-->:", dir)
 	initialser.AppendFontPath(filepath.Join(dir, "/*"))
 	return http.ListenAndServe(addr, r)
 
