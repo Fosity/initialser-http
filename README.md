@@ -6,7 +6,7 @@
     
 ## Installation
 
-    $ go get initialser-http
+    $ go get github.com/leonlau/initialser-http
 
 ## TODO 
 
