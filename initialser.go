@@ -3,7 +3,7 @@ import (
 	"gopkg.in/urfave/cli.v2"
 	"os"
 )
-const version = "0.0.1 beta"
+const version = "0.0.2 beta"
 func main() {
 	app := cli.NewApp()
 	app.Name = "initialser"
