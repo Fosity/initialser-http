@@ -24,6 +24,26 @@ var cmdHttp = &cli.Command{
 			Value:80,
 			Usage:"set port,-p 8080",
 		},
+		&cli.IntFlag{
+			Name:"max-bg-size",
+			Value:1024,
+			Usage:"set max background size,-max-bg-size 1024",
+		},
+		&cli.IntFlag{
+			Name:"max-f-size",
+			Value:800,
+			Usage:"set max font size,-max-f-size 1024",
+		},
+		&cli.IntFlag{
+			Name:"max-cache-items",
+			Value:1024,
+			Usage:"set max cache items,max-cache-items 1024",
+		},
+		&cli.IntFlag{
+			Name:"max-cache-bytes",
+			Value:200 * 1024 * 1024,
+			Usage:"set max cache bytes,max-cache-itemsmax-cache-bytes 200 * 1024 * 1024",
+		},
 		&cli.StringFlag{
 			Name:"dir",
 			Aliases:[]string{"d"},
@@ -35,29 +55,68 @@ var cmdHttp = &cli.Command{
 }
 
 const fileNamePathKey = "file_name"
-
 var dir = ""
+var conf = newConfig(9527)
+type config  struct {
+	maxFontSize int
+	maxBgSize   int
+	maxItems    int
+	maxBytes    int64
+	port        int
+	dir         string
+}
+
+func newConfig(port int) *config {
+	return &config{
+		port:port,
+		maxFontSize:800,
+		maxBgSize:1024,
+		dir:"./resource",
+	}
+}
+
+func (c *config)String() string {
+	return fmt.Sprintf(`
+maxFontSize:%d
+maxBgSize:%d
+maxItems:%d
+maxBytes:%d
+port:%d
+dir:%s
+	`,
+		conf.maxFontSize,
+		conf.maxBgSize,
+		conf.maxItems,
+		conf.maxBytes,
+		conf.port,
+		conf.dir)
+}
+
 
 func runHttp(c *cli.Context) error {
-
-	addr := fmt.Sprintf(":%d", c.Int("port"));
+	switch  {
+	case c.IsSet("port"):conf.port = c.Int("port")
+	case c.IsSet("dir"):conf.dir = c.String("dir")
+	case c.IsSet("max-bg-size"):conf.maxBgSize = c.Int("max-bg-size")
+	case c.IsSet("max-f-size"):conf.maxFontSize = c.Int("max-f-size")
+	case c.IsSet("max-cache-items"):conf.maxItems = c.Int("max-cache-items")
+	case c.IsSet("max-cache-bytes"):conf.maxBytes = int64(c.Int("max-cache-items"))
+	}
+	addr := fmt.Sprintf(":%d", conf.port);
 	r := mux.NewRouter()
 	r.HandleFunc("/", homeHandler);
 	r.HandleFunc(fmt.Sprintf("/{%s}", fileNamePathKey), avatarHandler);
 	println("app start ", addr)
-	dir = os.ExpandEnv(c.String("dir"));
-	if dir == "" {
-		dir = "./resource";
-	}
-	println("dir-->:", dir)
-	initialser.AppendFontPath(filepath.Join(dir, "/*"))
+	conf.dir = os.ExpandEnv(conf.dir);
+	println(conf.String())
+	initialser.AppendFontPath(filepath.Join(conf.dir, "/*"))
 	return http.ListenAndServe(addr, r)
 
 }
 
 
 
-
+//homeHandler home router
 func homeHandler(w http.ResponseWriter, req *http.Request) {
 	data, err := ioutil.ReadFile(filepath.Join(dir, "index.html"))
 	if err != nil {
@@ -133,6 +192,13 @@ func parseParamTo(avatar *initialser.Avatar, req *http.Request) error {
 			avatar.FontSize = fs
 		}
 	}
+	if avatar.Size > conf.maxBgSize {
+		return errors.New("s has exceeded the maximum limit ")
+	}
+	if avatar.FontSize > conf.maxFontSize {
+		return errors.New("fs has exceeded the maximum limit")
+	}
+
 	return nil
 }
 //ifBlankDefault default value
