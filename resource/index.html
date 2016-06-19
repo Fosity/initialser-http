@@ -313,15 +313,7 @@
         </li>
 
     </ul>
-    <h3>svg</h3>
 
-    <div class="img-wrapper">
-        <ul>
-            <li class="" v-for="i in 10">
-                <img :src="svg" class="circle img-{{i}}" v-show="show" alt=""/>
-            </li>
-        </ul>
-    </div>
 
     <h3>png</h3>
 
@@ -341,6 +333,7 @@
         </ul>
     </div>
 
+
     <h3>jpg</h3>
 
     <div class="img-wrapper">
@@ -350,7 +343,15 @@
             </li>
         </ul>
     </div>
+    <h3>svg</h3>
 
+    <div class="img-wrapper">
+        <ul>
+            <li class="" v-for="i in 10">
+                <img :src="svg" class="circle img-{{i}}" v-show="show" alt=""/>
+            </li>
+        </ul>
+    </div>
 
 </div>
 
