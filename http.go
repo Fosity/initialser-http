@@ -71,7 +71,7 @@ func newConfig(port int) *config {
 		port:port,
 		maxFontSize:800,
 		maxBgSize:1024,
-		dir:"./resource",
+		dir:"resource",
 	}
 }
 
@@ -118,9 +118,10 @@ func runHttp(c *cli.Context) error {
 
 //homeHandler home router
 func homeHandler(w http.ResponseWriter, req *http.Request) {
-	data, err := ioutil.ReadFile(filepath.Join(dir, "index.html"))
+	data, err := ioutil.ReadFile(filepath.Join(conf.dir, "index.html"))
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte("404"));
 		return
 	}
 	w.Write(data)
