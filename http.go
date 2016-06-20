@@ -143,11 +143,14 @@ func avatarHandler(w http.ResponseWriter, req *http.Request) {
 	text, ext := parseFileName(req);
 	encode := "png"
 	switch ext {
-	case ".ico":
 	case ".svg":
 		w.Header().Set("Content-Type", "image/svg+xml")
 		setCacheControl(w)
-		fmt.Fprint(w, initialser.NewAvatar(text).Svg())
+		na := initialser.NewAvatar(text);
+		if badReq(w, parseParamTo(na, req)) {
+			return;
+		}
+		fmt.Fprint(w, na.Svg())
 		return;
 	case ".jpg", ".jpeg":
 		encode = "jpg"
