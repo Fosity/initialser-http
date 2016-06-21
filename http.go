@@ -107,6 +107,7 @@ func runHttp(c *cli.Context) error {
 	println("app start ", addr)
 	conf.dir = os.ExpandEnv(conf.dir);
 	println(conf.String())
+	diskCache.Base = filepath.Join(conf.dir,diskCache.Base)
 	initialser.AppendFontPath(filepath.Join(conf.dir, "/*"))
 	return http.ListenAndServe(addr, r)
 
