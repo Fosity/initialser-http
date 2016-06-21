@@ -4,6 +4,7 @@ import (
 	"github.com/gorilla/mux"
 	"net/http"
 	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"path/filepath"
 	"strings"
 	"github.com/leonlau/initialser"
@@ -40,6 +41,11 @@ var cmdHttp = &cli.Command{
 			Value:true,
 			Usage:"enable disk cache,-enable-disk T",
 		},
+		&cli.BoolFlag{
+			Name:"debug",
+			Value:false,
+			Usage:"enable debug log,-deubg T",
+		},
 		&cli.StringFlag{
 			Name:"dir",
 			Value:"resource",
@@ -53,8 +59,11 @@ var cmdHttp = &cli.Command{
 
 const (
 	fileNamePathKey = "file_name"
-	keySplit = ":";
 )
+func init() {
+	log.SetLevel(log.WarnLevel)
+}
+
 var (
 	conf = newConfig(9527)
 	diskCache = cache.NewSimpleDiskCache("dc", func(key string) []string {
@@ -100,14 +109,17 @@ func runHttp(c *cli.Context) error {
 	conf.maxBgSize = c.Int("max-bg-size")
 	conf.maxFontSize = c.Int("max-f-size")
 	conf.diskCache = c.Bool("disk-cache")
+	if c.Bool("debug") {
+		log.SetLevel(log.DebugLevel)
+	}
 	addr := fmt.Sprintf(":%d", conf.port);
 	r := mux.NewRouter()
 	r.HandleFunc("/", homeHandler);
 	r.HandleFunc(fmt.Sprintf("/{%s}", fileNamePathKey), avatarHandler);
 	println("app start ", addr)
 	conf.dir = os.ExpandEnv(conf.dir);
-	println(conf.String())
-	diskCache.Base = filepath.Join(conf.dir,diskCache.Base)
+	log.Debug(conf.String())
+	diskCache.Base = filepath.Join(conf.dir, diskCache.Base)
 	initialser.AppendFontPath(filepath.Join(conf.dir, "/*"))
 	return http.ListenAndServe(addr, r)
 
@@ -172,8 +184,8 @@ func adapterResponse(key string, w http.ResponseWriter, d *initialser.Drawer) er
 		if data, err = diskCache.Get(key); err != nil {
 			data, err = d.DrawToBytes()
 			if err == nil { //todo concurrent write
-				println("set cache ", key)
-				diskCache.Set(key, data)
+				log.Debug("set cache ", key)
+				log.Debug(diskCache.Set(key, data))
 			}else {
 				return err
 			}
@@ -242,6 +254,7 @@ func badReq(w http.ResponseWriter, err error) bool {
 	if err == nil {
 		return false
 	}
+
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusBadRequest)
 	w.Write([]byte(err.Error()))
