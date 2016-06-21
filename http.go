@@ -11,6 +11,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"os"
+	"github.com/leonlau/initialser-http/cache"
 )
 
 var cmdHttp = &cli.Command{
@@ -22,7 +23,7 @@ var cmdHttp = &cli.Command{
 			Name:"port",
 			Aliases:[]string{"p"},
 			Value:80,
-			Usage:"set port,-p 8080",
+			Usage:"set port,-p 80",
 		},
 		&cli.IntFlag{
 			Name:"max-bg-size",
@@ -34,18 +35,14 @@ var cmdHttp = &cli.Command{
 			Value:800,
 			Usage:"set max font size,-max-f-size 1024",
 		},
-		&cli.IntFlag{
-			Name:"max-cache-items",
-			Value:1024,
-			Usage:"set max cache items,max-cache-items 1024",
-		},
-		&cli.IntFlag{
-			Name:"max-cache-bytes",
-			Value:200 * 1024 * 1024,
-			Usage:"set max cache bytes,max-cache-itemsmax-cache-bytes 200 * 1024 * 1024",
+		&cli.BoolFlag{
+			Name:"disk-cache",
+			Value:true,
+			Usage:"enable disk cache,-enable-disk T",
 		},
 		&cli.StringFlag{
 			Name:"dir",
+			Value:"resource",
 			Aliases:[]string{"d"},
 			EnvVars:[]string{"DIR"},
 			Usage:"set dir,-d resourse",
@@ -54,23 +51,31 @@ var cmdHttp = &cli.Command{
 
 }
 
-const fileNamePathKey = "file_name"
-var dir = ""
-var conf = newConfig(9527)
+const (
+	fileNamePathKey = "file_name"
+	keySplit = ":";
+)
+var (
+	conf = newConfig(9527)
+	diskCache = cache.NewSimpleDiskCache("dc", func(key string) []string {
+		if len(key) == 32 {
+			return []string{key[:8], key[8:16], key[16:24], key[24:]};
+		}
+		return []string{key};
+	});
+)
+
 type config  struct {
 	maxFontSize int
 	maxBgSize   int
-	maxItems    int
-	maxBytes    int64
 	port        int
 	dir         string
+	diskCache   bool
 }
 
 func newConfig(port int) *config {
 	return &config{
 		port:port,
-		maxFontSize:800,
-		maxBgSize:1024,
 		dir:"resource",
 	}
 }
@@ -79,40 +84,22 @@ func (c *config)String() string {
 	return fmt.Sprintf(`
 maxFontSize:%d
 maxBgSize:%d
-maxItems:%d
-maxBytes:%d
 port:%d
 dir:%s
 	`,
-		conf.maxFontSize,
-		conf.maxBgSize,
-		conf.maxItems,
-		conf.maxBytes,
-		conf.port,
-		conf.dir)
+		c.maxFontSize,
+		c.maxBgSize,
+		c.port,
+		c.dir)
 }
 
 
 func runHttp(c *cli.Context) error {
-	switch  {
-	case c.IsSet("port"):
-		conf.port = c.Int("port")
-		fallthrough
-	case c.IsSet("dir"):
-		conf.dir = c.String("dir")
-		fallthrough
-	case c.IsSet("max-bg-size"):
-		conf.maxBgSize = c.Int("max-bg-size")
-		fallthrough
-	case c.IsSet("max-f-size"):
-		conf.maxFontSize = c.Int("max-f-size")
-		fallthrough
-	case c.IsSet("max-cache-items"):
-		conf.maxItems = c.Int("max-cache-items")
-		fallthrough
-	case c.IsSet("max-cache-bytes"):
-		conf.maxBytes = int64(c.Int("max-cache-items"))
-	}
+	conf.port = c.Int("port")
+	conf.dir = c.String("dir")
+	conf.maxBgSize = c.Int("max-bg-size")
+	conf.maxFontSize = c.Int("max-f-size")
+	conf.diskCache = c.Bool("disk-cache")
 	addr := fmt.Sprintf(":%d", conf.port);
 	r := mux.NewRouter()
 	r.HandleFunc("/", homeHandler);
@@ -141,7 +128,6 @@ func homeHandler(w http.ResponseWriter, req *http.Request) {
 func avatarHandler(w http.ResponseWriter, req *http.Request) {
 	// parse path name
 	text, ext := parseFileName(req);
-	encode := "png"
 	switch ext {
 	case ".svg":
 		w.Header().Set("Content-Type", "image/svg+xml")
@@ -153,7 +139,6 @@ func avatarHandler(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprint(w, na.Svg())
 		return;
 	case ".jpg", ".jpeg":
-		encode = "jpg"
 		setCacheControl(w)
 		w.Header().Set("Content-Type", "image/jpeg")
 	case ".png", "":
@@ -164,16 +149,43 @@ func avatarHandler(w http.ResponseWriter, req *http.Request) {
 		return;
 	}
 	avatar := initialser.NewAvatar(text)
+	avatar.Ext = ext[1:]
 	// parse query param to avatar
 	err := parseParamTo(avatar, req);
 	if badReq(w, err) {
 		return;
 	}
 	d, err := initialser.NewDrawer(avatar)
+
 	if !badReq(w, err) {
-		badReq(w, d.DrawToWriter(w, encode))
+		badReq(w, adapterResponse(avatar.Key(), w, d))
 	}
 }
+//adapterResponse
+func adapterResponse(key string, w http.ResponseWriter, d *initialser.Drawer) error {
+	if conf.diskCache {
+		var (
+			data []byte
+			err error
+		)
+		if data, err = diskCache.Get(key); err != nil {
+			data, err = d.DrawToBytes()
+			if err == nil { //todo concurrent write
+				println("set cache ", key)
+				diskCache.Set(key, data)
+			}else {
+				return err
+			}
+		}
+		_, err = w.Write(data)
+		return err
+	}
+	return d.DrawToWriter(w)
+}
+
+
+
+
 //parseFileName parse url file name
 func parseFileName(req *http.Request) (title string, ext string) {
 	fileName := mux.Vars(req)[fileNamePathKey]
