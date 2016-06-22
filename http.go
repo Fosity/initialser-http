@@ -131,6 +131,7 @@ func runHttp(c *cli.Context) error {
 func homeHandler(w http.ResponseWriter, req *http.Request) {
 	data, err := ioutil.ReadFile(filepath.Join(conf.dir, "index.html"))
 	if err != nil {
+		log.Debug(err)
 		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte("404"));
 		return
