@@ -106,6 +106,7 @@ dir:%s
 func runHttp(c *cli.Context) error {
 	conf.port = c.Int("port")
 	conf.dir = c.String("dir")
+	println(c.String("dir"))
 	conf.maxBgSize = c.Int("max-bg-size")
 	conf.maxFontSize = c.Int("max-f-size")
 	conf.diskCache = c.Bool("disk-cache")
