@@ -129,8 +129,7 @@ func runHttp(c *cli.Context) error {
 
 //homeHandler home router
 func homeHandler(w http.ResponseWriter, req *http.Request) {
-	//abs,_:=filepath.Abs(conf.dir);
-	data, err := ioutil.ReadFile(filepath.Join("./resource", "index.html"))
+	data, err := ioutil.ReadFile(filepath.Join(conf.dir, "index.html"))
 	if err != nil {
 		log.Debug(err)
 		w.WriteHeader(http.StatusNotFound)
