@@ -43,7 +43,8 @@ func NewSimpleDiskCache(base string, transforms ...TransformFunc) *SimpleDiskCac
 
 func (sdc *SimpleDiskCache)Get(key string) ([]byte, error) {
 	fp := filepath.Join(sdc.Base, filepath.Join(sdc.Transform(key)...))
-	return ioutil.ReadFile(fp)
+	abs,_:=filepath.Abs(fp)
+	return ioutil.ReadFile(abs)
 }
 //Set if exists, override
 func (sdc *SimpleDiskCache)Set(key string, data []byte) error {

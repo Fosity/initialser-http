@@ -182,6 +182,7 @@ func adapterResponse(key string, w http.ResponseWriter, d *initialser.Drawer) er
 			err error
 		)
 		if data, err = diskCache.Get(key); err != nil {
+			log.Debug(err)
 			data, err = d.DrawToBytes()
 			if err == nil { //todo concurrent write
 				log.Debug("set cache ", key)
