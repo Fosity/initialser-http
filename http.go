@@ -13,6 +13,7 @@ import (
 	"io/ioutil"
 	"os"
 	"github.com/leonlau/initialser-http/cache"
+	"time"
 )
 
 var cmdHttp = &cli.Command{
@@ -141,23 +142,23 @@ func homeHandler(w http.ResponseWriter, req *http.Request) {
 }
 //avatarHandler server avatar
 func avatarHandler(w http.ResponseWriter, req *http.Request) {
+	println(req.Header.Get("If-None-Match"))
 	// parse path name
 	text, ext := parseFileName(req);
+	println(text)
 	switch ext {
 	case ".svg":
 		w.Header().Set("Content-Type", "image/svg+xml")
-		setCacheControl(w)
 		na := initialser.NewAvatar(text);
+		setCacheControl(w, na.Key());
 		if badReq(w, parseParamTo(na, req)) {
 			return;
 		}
 		fmt.Fprint(w, na.Svg())
 		return;
 	case ".jpg", ".jpeg":
-		setCacheControl(w)
 		w.Header().Set("Content-Type", "image/jpeg")
 	case ".png", "":
-		setCacheControl(w)
 		w.Header().Set("Content-Type", "image/png")
 	default:
 		badReq(w, errors.New("not support ext " + ext))
@@ -171,9 +172,8 @@ func avatarHandler(w http.ResponseWriter, req *http.Request) {
 		return;
 	}
 	d, err := initialser.NewDrawer(avatar)
-
-	if !badReq(w, err) {
-		badReq(w, adapterResponse(avatar.Key(), w, d))
+	if !badReq(w, err) && !badReq(w, adapterResponse(avatar.Key(), w, d)) {
+		setCacheControl(w,avatar.Key());
 	}
 }
 //adapterResponse
@@ -212,8 +212,10 @@ func parseFileName(req *http.Request) (title string, ext string) {
 }
 
 
-func setCacheControl(w http.ResponseWriter) {
-	w.Header().Set("Cache-Control", "public, max-age=600")
+func setCacheControl(w http.ResponseWriter, etag string) {
+	w.Header().Set("Cache-Control", "max-age=2592000") //second 30days
+	w.Header().Set("Etag", etag);
+	println(time.Now().Format("2006-01-02 15:04:05"),etag)
 }
 //parseParam  ?bg=#dd00ff&s=200&f=宋体&fs=120&c=#020319
 func parseParamTo(avatar *initialser.Avatar, req *http.Request) error {
@@ -255,9 +257,9 @@ func ifBlankDefault(str string, defStr string) string {
 //badReq err exist ,return bad request
 func badReq(w http.ResponseWriter, err error) bool {
 	if err == nil {
+		//cache
 		return false
 	}
-
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusBadRequest)
 	w.Write([]byte(err.Error()))

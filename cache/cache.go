@@ -56,3 +56,6 @@ func (sdc *SimpleDiskCache)Set(key string, data []byte) error {
 func (sdc *SimpleDiskCache)Clear() error {
 	return os.RemoveAll(sdc.Base)
 }
+
+
+
