@@ -3,6 +3,7 @@ import (
 	"github.com/boltdb/bolt"
 	"path/filepath"
 	"errors"
+	"os"
 )
 
 const (
@@ -19,6 +20,7 @@ type BoltCache struct {
 }
 
 func NewBoltCache(base string) KV {
+	os.Mkdir(base,defaultPathPerm);
 	db, err := bolt.Open(filepath.Join(base, cache_db), 0600, nil)
 	if err != nil {
 		println(err.Error())
