@@ -125,7 +125,7 @@ func runHttp(c *cli.Context) error {
 	//		return []string{key};
 	//	})
 	kv = cache.NewBoltCache(filepath.Join(conf.dir, "initial"));
-	initialser.OnlyPath(filepath.Join(conf.dir, "/*"))
+	initialser.OnlyPath(filepath.Join(conf.dir, "/fonts/*"))
 	return http.ListenAndServe(addr, r)
 
 }
