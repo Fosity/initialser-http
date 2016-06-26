@@ -40,11 +40,12 @@ var CmdHttp = &cli.Command{
 		},
 		&cli.StringFlag{
 			Name:"cache",
-			Value:false,
+			Value:"F",
 			Usage:"enable disk cache,-cache T",
 		},
 		&cli.StringFlag{
 			Name:"debug",
+			Value:"F",
 			Usage:"enable debug log,-deubg T",
 		},
 		&cli.StringFlag{
@@ -105,8 +106,6 @@ func runHttp(c *cli.Context) error {
 	conf.maxBgSize = c.Int("max-bg-size")
 	conf.maxFontSize = c.Int("max-f-size")
 	conf.cache = c.Bool("cache")
-
-
 	if c.Bool("debug") {
 		log.SetLevel(log.DebugLevel)
 	}
