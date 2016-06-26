@@ -16,9 +16,9 @@
 
 ## TODO 
 
-- [ ] cache
+- [x] cache
 - [x] max size limited
-- [ ] config
+- [x] config
 
 ## Performance
 
