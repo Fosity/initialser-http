@@ -4,7 +4,7 @@ import (
 	"os"
 	"github.com/leonlau/initialser-http/cmd"
 )
-const version = "0.0.3 beta"
+const version = "0.0.4 beta"
 func main() {
 	app := &cli.App{}
 	app.Name = "initialser"
@@ -13,5 +13,7 @@ func main() {
 	app.Commands = []*cli.Command{
 		cmd.CmdHttp,
 	}
+
+
 	app.Run(os.Args)
 }

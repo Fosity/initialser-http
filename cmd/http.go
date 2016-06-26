@@ -38,22 +38,20 @@ var CmdHttp = &cli.Command{
 			Value:800,
 			Usage:"set max font size,-max-f-size 1024",
 		},
-		&cli.BoolFlag{
+		&cli.StringFlag{
 			Name:"cache",
-			Value:true,
+			Value:false,
 			Usage:"enable disk cache,-cache T",
 		},
-		&cli.BoolFlag{
+		&cli.StringFlag{
 			Name:"debug",
-			Value:false,
 			Usage:"enable debug log,-deubg T",
 		},
 		&cli.StringFlag{
 			Name:"dir",
 			Value:"resource",
 			Aliases:[]string{"d"},
-			EnvVars:[]string{"DIR"},
-			Usage:"set dir,-d resourse",
+			Usage:"set dir,-dir resourse",
 		},
 	},
 
@@ -92,21 +90,23 @@ maxFontSize:%d
 maxBgSize:%d
 port:%d
 dir:%s
+cache:%v
 	`,
 		c.maxFontSize,
 		c.maxBgSize,
 		c.port,
-		c.dir)
+		c.dir,
+		c.cache)
 }
-
 
 func runHttp(c *cli.Context) error {
 	conf.port = c.Int("port")
 	conf.dir = c.String("dir")
-	log.Debug("dir:", c.String("dir"))
 	conf.maxBgSize = c.Int("max-bg-size")
 	conf.maxFontSize = c.Int("max-f-size")
 	conf.cache = c.Bool("cache")
+
+
 	if c.Bool("debug") {
 		log.SetLevel(log.DebugLevel)
 	}
@@ -151,7 +151,7 @@ func avatarHandler(w http.ResponseWriter, req *http.Request) {
 	case ".svg":
 		w.Header().Set("Content-Type", "image/svg+xml")
 		na := initialser.NewAvatar(text);
-		setCacheControl(w, na.Key());
+		//setCacheControl(w, na.Key());
 		if badReq(w, parseParamTo(na, req)) {
 			return;
 		}
@@ -176,7 +176,7 @@ func avatarHandler(w http.ResponseWriter, req *http.Request) {
 
 	key := md5hash(avatar.Key())
 	if !badReq(w, err) && !badReq(w, adapterResponse(key, w, d)) {
-		setCacheControl(w, hex.EncodeToString(key));
+		//setCacheControl(w, hex.EncodeToString(key));
 	}
 }
 

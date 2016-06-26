@@ -26,7 +26,7 @@ func NewBoltCache(base string) KV {
 		println(err.Error())
 		return nil
 	}
-	db.NoSync = true;
+	//db.NoSync = true;
 	return &BoltCache{
 		Base:base,
 		db:db,
