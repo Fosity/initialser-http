@@ -117,15 +117,15 @@ func runHttp(c *cli.Context) error {
 	log.Debug("app start ", addr)
 	conf.dir = os.ExpandEnv(conf.dir);
 	log.Debug(conf.String())
-//
-//	kv = cache.NewSimpleDiskCache(filepath.Join(conf.dir, "initial"), func(key string) []string {
-//		if len(key) == 32 {
-//			return []string{key[:8], key[8:16], key[16:24], key[24:]};
-//		}
-//		return []string{key};
-//	})
+	//
+	//	kv = cache.NewSimpleDiskCache(filepath.Join(conf.dir, "initial"), func(key string) []string {
+	//		if len(key) == 32 {
+	//			return []string{key[:8], key[8:16], key[16:24], key[24:]};
+	//		}
+	//		return []string{key};
+	//	})
 	kv = cache.NewBoltCache(filepath.Join(conf.dir, "initial"));
-	initialser.AppendFontPath(filepath.Join(conf.dir, "/*"))
+	initialser.OnlyPath(filepath.Join(conf.dir, "/*"))
 	return http.ListenAndServe(addr, r)
 
 }
