@@ -1,4 +1,4 @@
-package main
+package cmd
 import (
 	"gopkg.in/urfave/cli.v2"
 	"github.com/gorilla/mux"
@@ -17,7 +17,7 @@ import (
 	"encoding/hex"
 )
 
-var cmdHttp = &cli.Command{
+var CmdHttp = &cli.Command{
 	Name:"http",
 	Usage:"start a http server",
 	Action:runHttp,

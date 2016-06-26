@@ -2,15 +2,16 @@ package main
 import (
 	"gopkg.in/urfave/cli.v2"
 	"os"
+	"github.com/leonlau/initialser-http/cmd"
 )
-const version = "0.0.2 beta"
+const version = "0.0.3 beta"
 func main() {
-	app := cli.NewApp()
+	app := &cli.App{}
 	app.Name = "initialser"
 	app.Version = version
 	app.Usage = ""
 	app.Commands = []*cli.Command{
-		cmdHttp,
+		cmd.CmdHttp,
 	}
 	app.Run(os.Args)
 }
