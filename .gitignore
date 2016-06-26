@@ -25,5 +25,5 @@ _testmain.go
 *.iml
 .idea
 initialser-http
-dc
+resource/initial
 test.sh

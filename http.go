@@ -13,7 +13,8 @@ import (
 	"io/ioutil"
 	"os"
 	"github.com/leonlau/initialser-http/cache"
-	"time"
+	"crypto/md5"
+	"encoding/hex"
 )
 
 var cmdHttp = &cli.Command{
@@ -38,9 +39,9 @@ var cmdHttp = &cli.Command{
 			Usage:"set max font size,-max-f-size 1024",
 		},
 		&cli.BoolFlag{
-			Name:"disk-cache",
+			Name:"cache",
 			Value:true,
-			Usage:"enable disk cache,-enable-disk T",
+			Usage:"enable disk cache,-cache T",
 		},
 		&cli.BoolFlag{
 			Name:"debug",
@@ -67,12 +68,7 @@ func init() {
 
 var (
 	conf = newConfig(9527)
-	diskCache = cache.NewSimpleDiskCache("dc", func(key string) []string {
-		if len(key) == 32 {
-			return []string{key[:8], key[8:16], key[16:24], key[24:]};
-		}
-		return []string{key};
-	});
+	kv cache.KV
 )
 
 type config  struct {
@@ -80,7 +76,7 @@ type config  struct {
 	maxBgSize   int
 	port        int
 	dir         string
-	diskCache   bool
+	cache       bool
 }
 
 func newConfig(port int) *config {
@@ -107,10 +103,10 @@ dir:%s
 func runHttp(c *cli.Context) error {
 	conf.port = c.Int("port")
 	conf.dir = c.String("dir")
-	println(c.String("dir"))
+	log.Debug("dir:", c.String("dir"))
 	conf.maxBgSize = c.Int("max-bg-size")
 	conf.maxFontSize = c.Int("max-f-size")
-	conf.diskCache = c.Bool("disk-cache")
+	conf.cache = c.Bool("cache")
 	if c.Bool("debug") {
 		log.SetLevel(log.DebugLevel)
 	}
@@ -118,10 +114,17 @@ func runHttp(c *cli.Context) error {
 	r := mux.NewRouter()
 	r.HandleFunc("/", homeHandler);
 	r.HandleFunc(fmt.Sprintf("/{%s}", fileNamePathKey), avatarHandler);
-	println("app start ", addr)
+	log.Debug("app start ", addr)
 	conf.dir = os.ExpandEnv(conf.dir);
 	log.Debug(conf.String())
-	diskCache.Base = filepath.Join(conf.dir, diskCache.Base)
+//
+//	kv = cache.NewSimpleDiskCache(filepath.Join(conf.dir, "initial"), func(key string) []string {
+//		if len(key) == 32 {
+//			return []string{key[:8], key[8:16], key[16:24], key[24:]};
+//		}
+//		return []string{key};
+//	})
+	kv = cache.NewBoltCache(filepath.Join(conf.dir, "initial"));
 	initialser.AppendFontPath(filepath.Join(conf.dir, "/*"))
 	return http.ListenAndServe(addr, r)
 
@@ -142,10 +145,8 @@ func homeHandler(w http.ResponseWriter, req *http.Request) {
 }
 //avatarHandler server avatar
 func avatarHandler(w http.ResponseWriter, req *http.Request) {
-	println(req.Header.Get("If-None-Match"))
 	// parse path name
 	text, ext := parseFileName(req);
-	println(text)
 	switch ext {
 	case ".svg":
 		w.Header().Set("Content-Type", "image/svg+xml")
@@ -172,26 +173,34 @@ func avatarHandler(w http.ResponseWriter, req *http.Request) {
 		return;
 	}
 	d, err := initialser.NewDrawer(avatar)
-	if !badReq(w, err) && !badReq(w, adapterResponse(avatar.Key(), w, d)) {
-		setCacheControl(w,avatar.Key());
+
+	key := md5hash(avatar.Key())
+	if !badReq(w, err) && !badReq(w, adapterResponse(key, w, d)) {
+		setCacheControl(w, hex.EncodeToString(key));
 	}
 }
+
+func md5hash(key string) []byte {
+	h := md5.New()
+	h.Write([]byte(key))
+	return h.Sum(nil)
+}
+
 //adapterResponse
-func adapterResponse(key string, w http.ResponseWriter, d *initialser.Drawer) error {
-	if conf.diskCache {
+func adapterResponse(key []byte, w http.ResponseWriter, d *initialser.Drawer) error {
+	if conf.cache {
 		var (
 			data []byte
 			err error
 		)
-		if data, err = diskCache.Get(key); err != nil {
-			log.Debug(err)
-			data, err = d.DrawToBytes()
-			if err == nil { //todo concurrent write
-				log.Debug("set cache ", key)
-				log.Debug(diskCache.Set(key, data))
-			}else {
-				return err
-			}
+		if data, ok := kv.Get(key); ok {
+			_, err = w.Write(data)
+			return err
+		}
+		data, err = d.DrawToBytes()
+		if err == nil {
+			log.Debug("set cache ", hex.EncodeToString(key))
+			log.Debug(kv.Set(key, data))
 		}
 		_, err = w.Write(data)
 		return err
@@ -215,7 +224,7 @@ func parseFileName(req *http.Request) (title string, ext string) {
 func setCacheControl(w http.ResponseWriter, etag string) {
 	w.Header().Set("Cache-Control", "max-age=2592000") //second 30days
 	w.Header().Set("Etag", etag);
-	println(time.Now().Format("2006-01-02 15:04:05"),etag)
+
 }
 //parseParam  ?bg=#dd00ff&s=200&f=宋体&fs=120&c=#020319
 func parseParamTo(avatar *initialser.Avatar, req *http.Request) error {

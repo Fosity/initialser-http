@@ -6,8 +6,8 @@
 [demo](http://initialser.mingtianqi.com)
     
     
- ![preview demo](https://raw.githubusercontent.com/leonlau/initialser-http/master/resource/demo.png)
-
+ ![preview demo](https://raw.githubusercontent.com/leonlau/initialser-http/master/resource/demo1.png)
+ ![preview demo](https://raw.githubusercontent.com/leonlau/initialser-http/master/resource/demo2.png)
 
 
 ## Installation

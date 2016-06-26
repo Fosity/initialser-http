@@ -436,6 +436,66 @@
 
             return options
         }
+
+
+        var RColor = function () {
+            this.hue = Math.random(),
+                    this.goldenRatio = 0.618033988749895;
+            this.hexwidth = 2;
+        };
+
+        RColor.prototype.hsvToRgb = function (h, s, v) {
+            var h_i = Math.floor(h * 6),
+                    f = h * 6 - h_i,
+                    p = v * (1 - s),
+                    q = v * (1 - f * s),
+                    t = v * (1 - (1 - f) * s),
+                    r = 255,
+                    g = 255,
+                    b = 255;
+            switch (h_i) {
+                case 0:
+                    r = v, g = t, b = p;
+                    break;
+                case 1:
+                    r = q, g = v, b = p;
+                    break;
+                case 2:
+                    r = p, g = v, b = t;
+                    break;
+                case 3:
+                    r = p, g = q, b = v;
+                    break;
+                case 4:
+                    r = t, g = p, b = v;
+                    break;
+                case 5:
+                    r = v, g = p, b = q;
+                    break;
+            }
+            return [Math.floor(r * 256), Math.floor(g * 256), Math.floor(b * 256)];
+        };
+
+        RColor.prototype.padHex = function (str) {
+            if (str.length > this.hexwidth) return str;
+            return new Array(this.hexwidth - str.length + 1).join('0') + str;
+        };
+
+        RColor.prototype.get = function (hex, saturation, value) {
+            this.hue += this.goldenRatio;
+            this.hue %= 1;
+            if (typeof saturation !== "number")    saturation = 0.5;
+            if (typeof value !== "number")        value = 0.95;
+            var rgb = this.hsvToRgb(this.hue, saturation, value);
+            if (hex)
+                return this.padHex(rgb[0].toString(16))
+                        + this.padHex(rgb[1].toString(16))
+                        + this.padHex(rgb[2].toString(16));
+            else
+                return rgb;
+        };
+
+
     </script>
     <link href="//cdn.bootcss.com/normalize/4.1.1/normalize.min.css" rel="stylesheet">
     <style>
@@ -692,11 +752,11 @@
 
     <ul class="avatars">
         <li v-bind:class="{active:index==1}">
-            <img src="/张.png?s=38&fs=25&bg=45BDF3" class="circle"/>
+            <img src="/张.png?f=guyuexing&c=0f1f4c&fs=30&bg=dbfdb1&s=48" class="circle"/>
             <span>张三</span>
         </li>
         <li v-bind:class="{active:index==2}">
-            <img src="/刘.png?s=38&fs=25&bg=E08F70" class="circle "/>
+            <img src="/刘.png?f=guyuexing&s=38&fs=25&c=200f4c&bg=b2fdb1" class="circle "/>
             <span>刘老师</span>
         </li>
         <li v-bind:class="{active:index==3}">
@@ -704,7 +764,7 @@
             <span>leon</span>
         </li>
         <li v-bind:class="{active:index==4}">
-            <img src="/朴.png?s=38&fs=25&bg=9575CD" class="circle "/>
+            <img src="/朴.png?f=caiyun&s=38&fs=25&bg=9575CD" class="circle "/>
             <span>朴俊熙</span>
         </li>
         <li v-bind:class="{active:index==5}">
@@ -743,6 +803,20 @@
 
     </ul>
 
+    <h3>fonts</h3>
+    <ul class="avatars">
+        <li class="" v-for="i in 5">
+            <img :src="pngGuyue" class="img-2" v-show="show" alt=""/>
+            <span v-text="text"></span>
+        </li>
+    </ul>
+    <h4></h4>
+    <ul class="avatars">
+        <li class="" v-for="i in 5">
+            <img :src="pngGuyue" class="circle img-2" v-show="show" alt=""/>
+            <span v-text="text"></span>
+        </li>
+    </ul>
 
     <h3>png</h3>
 
@@ -757,20 +831,6 @@
     <ul class="avatars">
         <li class="" v-for="i in 5">
             <img :src="png" class="img-2" v-show="show" alt=""/>
-            <span v-text="text"></span>
-        </li>
-    </ul>
-    <h3>fonts</h3>
-    <ul class="avatars">
-        <li class="" v-for="i in 5">
-            <img :src="pngGuyue" class="img-2" v-show="show" alt=""/>
-            <span v-text="text"></span>
-        </li>
-    </ul>
-    <h4></h4>
-    <ul class="avatars">
-        <li class="" v-for="i in 5">
-            <img :src="pngGuyue" class="circle img-2" v-show="show" alt=""/>
             <span v-text="text"></span>
         </li>
     </ul>
@@ -806,18 +866,28 @@
         "993366", "99CCCC", "99CC66",
         "CCCCCC", "FF9999", "FFFFCC"
     ];
-    var text = ['张', '王', '李', '赵', '刘', 'a', 'b', 'c', 'd', 'e', 'f', 'j', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
-    var names = ['小泽', '小明', '小米', 'John', 'Michelle', 'Mary', 'David', 'Sunny', 'James', 'Michael', 'Jessica', 'Jennifer', 'Elizabeth', 'Salvatore', 'Genevieve', 'Emilie', 'Ariana', 'Molly', 'Wordsworth', 'Paul Arizin', 'Dolph Schayes', 'George Mikan', 'Bill Russell', 'Sam Jones', 'Elgin Baylor', 'Hal Greer', 'Jerry West', 'Oscar Robertson'];
-    var fonts = ['','caiyun','banxing','guyuexing'];
-    function randomBg() {
-        return bg[parseInt(Math.random() * bg.length)]
+
+    var names = ['虚竹', '阿朱', '阿紫', '段誉', '乔峰', '龙泽', '小明', 'John', 'Michelle', 'Mary', 'David', 'Sunny', 'James', 'Michael', 'Jessica', 'Jennifer', 'Elizabeth', 'Salvatore', 'Genevieve', 'Emilie', 'Ariana', 'Molly', 'Wordsworth', 'Paul Arizin', 'Dolph Schayes', 'George Mikan', 'Bill Russell', 'Sam Jones', 'Elgin Baylor', 'Hal Greer', 'Jerry West', 'Oscar Robertson'];
+    var fonts = ['', 'caiyun', 'banxing', 'guyuexing'];
+    var _color = new RColor();
+    function randomParams() {
+        return "f=" + randomFont() + "&fs=80&c=" + randomDark() + "&bg=" + randomLight();
     }
+    function randomLight() {
+        return _color.get(true, 0.3, 0.99);
+    }
+    function randomDark() {
+        return _color.get(true, 0.8, 0.3);
+    }
+
     function randomText() {
         return names[parseInt(Math.random() * names.length)]
     }
-    function randomFont(){
-        return fonts[parseInt(Math.random() * fonts.length)] ;fonts
+    function randomFont() {
+        return fonts[parseInt(Math.random() * fonts.length)];
+        fonts
     }
+
 
     new Vue({
         el: "#app",
@@ -852,7 +922,7 @@
                 this.startLoop();
             },
             url: function (ext) {
-                return "/" + this.text + ext + "?bg=" + randomBg();
+                return "/" + this.text + ext + "?" + randomParams();
             }
         },
         computed: {
@@ -865,7 +935,7 @@
                     if (!this.text) {
                         return
                     }
-                    return "/" + initials(this.text) + ".jpg?f="+randomFont()+"&c=000000&fs=80&bg="+randomBg();
+                    return "/" + initials(this.text) + ".jpg?" + randomParams();
                 }
             },
             svg: {
@@ -874,7 +944,7 @@
                     if (!this.text) {
                         return
                     }
-                    return "/" + initials(this.text) + ".svg?fs=80&bg=" + randomBg();
+                    return "/" + initials(this.text) + ".svg?" + randomParams();
                 }
             },
             jpg: {
@@ -883,7 +953,7 @@
                     if (!this.text) {
                         return
                     }
-                    return "/" + initials(this.text) + ".jpg?fs=80&bg=" + randomBg();
+                    return "/" + initials(this.text) + ".jpg?" + randomParams();
                 }
             },
             png: {
@@ -892,7 +962,7 @@
                     if (!this.text) {
                         return
                     }
-                    return "/" + initials(this.text) + ".png?fs=80&bg=" + randomBg();
+                    return "/" + initials(this.text) + ".png?" + randomParams();
                 }
             }
         }
